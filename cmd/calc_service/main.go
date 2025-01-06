@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	if err := server.Start(); err != nil {
+	if err := server.New().Start(); err != nil {
 		log.Fatalf("Ошибка при запуске сервера: %v", err)
 	}
 }

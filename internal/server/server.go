@@ -4,13 +4,37 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 
 	"github.com/ByteNode1/GolangCalculator/internal/calculator"
 	"github.com/gorilla/mux"
 )
 
+type Config struct {
+	Addr string
+}
+
+func ConfigFromEnv() *Config {
+	config := new(Config)
+	config.Addr = os.Getenv("PORT")
+	if config.Addr == "" {
+		config.Addr = "8080"
+	}
+	return config
+}
+
+type Application struct {
+	config *Config
+}
+
+func New() *Application {
+	return &Application{
+		config: ConfigFromEnv(),
+	}
+}
+
 // Обработчик HTTP запросов для вычисления выражений
-func calculateHandler(w http.ResponseWriter, r *http.Request) {
+func CalculateHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Expression string `json:"expression"`
 	}
@@ -50,9 +74,9 @@ func calculateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Запуск HTTP-сервера
-func Start() error {
+func (a *Application) Start() error {
 	r := mux.NewRouter()
-	r.HandleFunc("/api/v1/calculate", calculateHandler).Methods("POST")
+	r.HandleFunc("/api/v1/calculate", CalculateHandler).Methods("POST")
 
-	return http.ListenAndServe(":8080", r)
+	return http.ListenAndServe(":"+a.config.Addr, r)
 }
