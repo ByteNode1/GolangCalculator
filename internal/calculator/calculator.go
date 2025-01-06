@@ -1,18 +1,8 @@
-package main
+package calculator
 
 import (
-	"errors"
 	"strconv"
 	"unicode"
-)
-
-// Предопределенные ошибки
-var (
-	ErrMismatchedParentheses = errors.New("несоответствие открывающих и закрывающих скобок")
-	ErrInvalidExpression     = errors.New("неверное выражение")
-	ErrInvalidCharacter      = errors.New("недопустимый символ в выражении")
-	ErrConsecutiveOperators  = errors.New("два оператора подряд")
-	ErrDivisionByZero        = errors.New("деление на ноль")
 )
 
 // Определение приоритета оператора
@@ -28,7 +18,7 @@ func precedence(op byte) int {
 }
 
 // Выполнение арифметической операции
-func ParseOp(a, b float64, op byte) (float64, error) {
+func parseOp(a, b float64, op byte) (float64, error) {
 	switch op {
 	case '+':
 		return a + b, nil
@@ -60,7 +50,6 @@ func Calc(expression string) (float64, error) {
 			continue
 
 		case unicode.IsDigit(char) || char == '.':
-			// Если символ - часть числа, добавляем его в буфер
 			numBuffer += string(char)
 			lastWasOp = false
 
@@ -95,7 +84,7 @@ func Calc(expression string) (float64, error) {
 				values = values[:len(values)-1]
 				op := ops[len(ops)-1]
 				ops = ops[:len(ops)-1]
-				result, err := ParseOp(val1, val2, op)
+				result, err := parseOp(val1, val2, op)
 				if err != nil {
 					return 0, err
 				}
@@ -129,7 +118,7 @@ func Calc(expression string) (float64, error) {
 				values = values[:len(values)-1]
 				op := ops[len(ops)-1]
 				ops = ops[:len(ops)-1]
-				result, err := ParseOp(val1, val2, op)
+				result, err := parseOp(val1, val2, op)
 				if err != nil {
 					return 0, err
 				}
@@ -143,7 +132,6 @@ func Calc(expression string) (float64, error) {
 		}
 	}
 
-	// Обработка последнего числа в буфере
 	if len(numBuffer) > 0 {
 		val, err := strconv.ParseFloat(numBuffer, 64)
 		if err != nil {
@@ -152,12 +140,10 @@ func Calc(expression string) (float64, error) {
 		values = append(values, val)
 	}
 
-	// Проверка на несбалансированные скобки
 	if balance != 0 {
 		return 0, ErrMismatchedParentheses
 	}
 
-	// Выполняем оставшиеся операции
 	for len(ops) > 0 {
 		if len(values) < 2 {
 			return 0, ErrInvalidExpression
@@ -168,25 +154,15 @@ func Calc(expression string) (float64, error) {
 		values = values[:len(values)-1]
 		op := ops[len(ops)-1]
 		ops = ops[:len(ops)-1]
-		result, err := ParseOp(val1, val2, op)
+		result, err := parseOp(val1, val2, op)
 		if err != nil {
 			return 0, err
 		}
 		values = append(values, result)
 	}
 
-	// Проверка, что в стеке осталось одно значение - результат
 	if len(values) != 1 {
 		return 0, ErrInvalidExpression
 	}
 	return values[0], nil
 }
-
-// func main() {
-// 	result, err := Calc("1/2")
-// 	if err != nil {
-// 		fmt.Println("Ошибка:", err)
-// 	} else {
-// 		fmt.Println("Результат:", result)
-// 	}
-// }
